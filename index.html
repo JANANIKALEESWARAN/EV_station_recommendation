@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart EV Optimization</title>
+
+    <!-- Leaflet & Routing Machine Libraries (No API Key Required) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+            box-sizing: border-box;
+        }
+
+        .header-full {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 800px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        h1 {
+            color: #0284c7;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #0f172a;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        button {
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            padding: 1rem;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background: #0284c7;
+        }
+
+        .result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+            color: #64748b;
+        }
+
+        .success-text {
+            color: #16a34a;
+            font-weight: bold;
+        }
+
+        /* Map Styles */
+        #map {
+            height: 350px;
+            width: 100%;
+            margin-top: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            display: none;
+            z-index: 10;
+        }
+
+        /* Hide the annoying turn-by-turn text box from Leaflet Routing Machine */
+        .leaflet-routing-container {
+            display: none !important;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: #ffffff;
+            border: 2px solid #ef4444;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .modal h2 {
+            color: #dc2626;
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal p {
+            color: #0f172a;
+            line-height: 1.5;
+        }
+
+        .nearest-station {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-top: 1rem;
+            text-align: left;
+            display: none;
+        }
+
+        .modal-close {
+            background: #cbd5e1;
+            color: #0f172a;
+            padding: 0.5rem 1rem;
+            margin-top: 1rem;
+            width: auto;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            background: #94a3b8;
+        }
+
+        /* Chat UI */
+        .chat-section {
+            margin-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1.5rem;
+            display: none;
+        }
+
+        .chat-section h3 {
+            color: #0284c7;
+            margin-bottom: 1rem;
+        }
+
+        .chat-messages {
+            height: 350px;
+            overflow-y: auto;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .msg-user {
+            background: #dbeafe;
+            color: #1e3a8a;
+            padding: 0.6rem 1rem;
+            border-radius: 12px 12px 2px 12px;
+            align-self: flex-end;
+            max-width: 85%;
+            font-size: 0.95rem;
+            border: 1px solid #bfdbfe;
+        }
+
+        .msg-ai {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 0.6rem 1rem;
+            border-radius: 12px 12px 12px 2px;
+            align-self: flex-start;
+            max-width: 85%;
+            font-size: 0.95rem;
+            color: #334155;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input-row input {
+            flex: 1;
+            margin: 0;
+        }
+
+        .chat-input-row button {
+            width: auto;
+            margin: 0;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Spans across the entire top -->
+        <div class="header-full">
+            <h1>EV Charging Optimizer</h1>
+            <p style="text-align: center; color: #94a3b8; margin-bottom: 2rem;">Find the best station using your exact
+                GPS location.</p>
+        </div>
+
+        <!-- Left Column: Inputs and Buttons -->
+        <div class="left-panel">
+            <div class="form-group">
+                <label>Battery Percentage (%)</label>
+                <input type="number" id="battery" value="20" min="1" max="100">
+            </div>
+            <div class="form-group">
+                <label>Vehicle Type</label>
+                <select id="vehicle">
+                    <option value="Car">Car</option>
+                    <option value="Bike">Bike</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Time of Day</label>
+                <select id="time">
+                    <option value="Morning">Morning</option>
+                    <option value="Afternoon" selected>Afternoon</option>
+                    <option value="Evening">Evening</option>
+                    <option value="Night">Night</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Hour (0-23)</label>
+                <input type="number" id="hour" value="14" min="0" max="23">
+            </div>
+            <div class="form-group">
+                <label>Weekday (0=Mon, 6=Sun)</label>
+                <input type="number" id="weekday" value="2" min="0" max="6">
+            </div>
+            <div class="form-group">
+                <label>Desired Charging Power (kW)</label>
+                <input type="number" id="power" value="50">
+            </div>
+
+            <button id="simulateBtn" onclick="startSimulation()"
+                style="background: #fbbf24; color: black; margin-bottom: 0.5rem;">🚗 Simulate Driving (Battery
+                Drain)</button>
+            <button id="optimizeBtn" onclick="optimizeStation()">📍 Optimize Using Real-Time GPS</button>
+            <div class="loader" id="loader">Fetching precise GPS location and optimizing...</div>
+        </div>
+
+        <!-- Right Column: Results and Chat -->
+        <div class="right-panel">
+            <div class="result" id="resultBlock" style="margin-top: 0;">
+                <h3 class="success-text" style="margin-top: 0;">Optimized Station Found!</h3>
+                <p><strong>Station Name:</strong> <span id="r-station"></span></p>
+                <p><strong>Distance:</strong> <span id="r-distance"></span> km</p>
+                <p><strong>Optimization Score:</strong> <span id="r-score"></span></p>
+                <p><strong>Predicted Demand:</strong> <span id="r-demand"></span> EVs/hr</p>
+                <p><strong>Latitude Used:</strong> <span id="r-lat"></span></p>
+                <p><strong>Longitude Used:</strong> <span id="r-lon"></span></p>
+            </div>
+
+            <!-- Route Map Container -->
+            <div id="map"></div>
+
+            <!-- Chat Section -->
+            <div class="chat-section" id="chatSection" style="margin-top: 1.5rem; border-top: none; padding-top: 0;">
+                <h3 style="margin-top:0;">🤖 Chat with AI about your Results</h3>
+                <p style="color:#94a3b8; font-size:0.85rem; margin-top:-0.5rem; margin-bottom:1rem;">Ask Mistral
+                    anything
+                    about the optimization report above.</p>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="msg-ai">👋 Hi! I have read your EV optimization report. Ask me anything about it — why
+                        this
+                        station was chosen, what the demand means, or anything else!</div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="e.g. Why was this station chosen?"
+                        onkeydown="if(event.key==='Enter') sendChat()">
+                    <button onclick="sendChat()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Battery Modal -->
+    <div class="modal-overlay" id="alertModal">
+        <div class="modal">
+            <h2>⚠️ Battery Running Low!</h2>
+            <p>Your battery is below 20%.</p>
+            <p style="color: #fbbf24; font-weight: bold;">Your battery is currently <span
+                    id="alert-battery-val"></span>%. Please charge your vehicle soon.</p>
+
+            <div id="alert-loader" class="loader" style="display: block;">Locating Nearest Station...</div>
+
+            <div class="nearest-station" id="nearestStationBlock">
+                <h3 style="color: #4ade80; margin-top: 0;">Nearest Station Found</h3>
+                <p><strong>Name:</strong> <span id="n-station"></span></p>
+                <p><strong>Distance:</strong> <span id="n-distance"></span> km away</p>
+                <p><strong>Available Power:</strong> <span id="n-power"></span> kW</p>
+            </div>
+
+            <button class="modal-close" onclick="closeModal()">Dismiss</button>
+        </div>
+    </div>
+
+    <script>
+        let simInterval = null;
+        let alertTriggered = false;
+
+        function startSimulation() {
+            const simBtn = document.getElementById('simulateBtn');
+            if (simInterval) {
+                clearInterval(simInterval);
+                simInterval = null;
+                simBtn.innerText = "🚗 Simulate Driving (Battery Drain)";
+                return;
+            }
+
+            simBtn.innerText = "🛑 Stop Simulation";
+            alertTriggered = false; // Reset trigger
+            const batteryInput = document.getElementById('battery');
+
+            simInterval = setInterval(() => {
+                let currentBat = parseFloat(batteryInput.value);
+                if (currentBat > 1) {
+                    currentBat -= 1;
+                    batteryInput.value = currentBat;
+
+                    // CRITICAL TRIGGER CONDITION
+                    if (currentBat < 20 && !alertTriggered) {
+                        alertTriggered = true;
+                        clearInterval(simInterval);
+                        simBtn.innerText = "🚗 Simulate Driving (Battery Drain)";
+                        triggerLowBatteryFlow(currentBat);
+                    }
+                } else {
+                    clearInterval(simInterval);
+                    simBtn.innerText = "🚗 Simulate Driving (Battery Drain)";
+                }
+            }, 1000); // drain 1% every second
+        }
+
+        function triggerLowBatteryFlow(batVal) {
+            // Show Alert Modal
+            document.getElementById('alertModal').style.display = 'flex';
+            document.getElementById('alert-battery-val').innerText = batVal;
+            document.getElementById('nearestStationBlock').style.display = 'none';
+            document.getElementById('alert-loader').style.display = 'block';
+
+            // Auto obtain location and find nearest station based on low battery
+            optimizeStation(true);
+        }
+
+        function closeModal() {
+            document.getElementById('alertModal').style.display = 'none';
+        }
+
+        function optimizeStation(isLowBatteryAlert = false) {
+            const btn = document.getElementById('optimizeBtn');
+            const loader = document.getElementById('loader');
+            const resultBlock = document.getElementById('resultBlock');
+
+            // Form Data
+            const reqData = {
+                battery_percentage: parseFloat(document.getElementById('battery').value),
+                vehicle: document.getElementById('vehicle').value,
+                time: document.getElementById('time').value,
+                hour: parseInt(document.getElementById('hour').value),
+                weekday: parseInt(document.getElementById('weekday').value),
+                charging_power: parseFloat(document.getElementById('power').value)
+            };
+
+            if (!isLowBatteryAlert) {
+                btn.style.display = 'none';
+                loader.style.display = 'block';
+                resultBlock.style.display = 'none';
+            }
+
+            // 1. Fetch Real-time GPS Location!
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    // Success callback
+                    (position) => {
+                        reqData.latitude = position.coords.latitude;
+                        reqData.longitude = position.coords.longitude;
+                        sendToAPI(reqData, isLowBatteryAlert);
+                    },
+                    // Error callback
+                    (error) => {
+                        if (!isLowBatteryAlert) alert("Could not get GPS location. Error: " + error.message + ". Will use backend IP fallback.");
+                        sendToAPI(reqData, isLowBatteryAlert);
+                    },
+                    // Options: ensure high accuracy
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                if (!isLowBatteryAlert) alert("Geolocation is not supported by this browser. Will use backend IP fallback.");
+                sendToAPI(reqData, isLowBatteryAlert);
+            }
+        }
+
+        function sendToAPI(data, isLowBatteryAlert) {
+            fetch('/api/optimize-ev', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(res => {
+                    if (isLowBatteryAlert) {
+                        // Find strictly the nearest station by mapping the generic OpenChargeMap Data from all_stations 
+                        const allStations = res.all_stations || [];
+                        if (allStations.length > 0) {
+                            let nearest = allStations.reduce((prev, curr) => (prev.Distance < curr.Distance) ? prev : curr);
+                            document.getElementById('n-station').innerText = nearest.Station;
+                            document.getElementById('n-distance').innerText = nearest.Distance;
+                            document.getElementById('n-power').innerText = nearest.Power;
+                        } else {
+                            document.getElementById('n-station').innerText = "None found nearby";
+                            document.getElementById('n-distance').innerText = "-";
+                            document.getElementById('n-power').innerText = "-";
+                        }
+                        document.getElementById('alert-loader').style.display = 'none';
+                        document.getElementById('nearestStationBlock').style.display = 'block';
+                    }
+
+                    // Always populate normal results underneath 
+                    const optStation = res.optimized_station || {};
+                    document.getElementById('r-station').innerText = optStation.Station || "None found (Try refreshing/moving)";
+                    document.getElementById('r-distance').innerText = optStation.Distance || "N/A";
+                    document.getElementById('r-score').innerText = optStation.OptimizationScore || "N/A";
+                    document.getElementById('r-demand').innerText = res.predicted_demand || "N/A";
+                    document.getElementById('r-lat').innerText = res.latitude || data.latitude || "Unknown";
+                    document.getElementById('r-lon').innerText = res.longitude || data.longitude || "Unknown";
+
+                    // Extract Latitude and Longitude from Optimized Station for map tracking
+                    const optLat = optStation.Latitude;
+                    const optLon = optStation.Longitude;
+
+                    // Plot the route on the Leaflet Map
+                    initOrUpdateMap(res.latitude || data.latitude, res.longitude || data.longitude, optLat, optLon);
+
+                    // Build human-readable report for Mistral RAG context
+                    window._evReport = `
+EV Optimization Report:
+- Vehicle: ${data.vehicle}
+- Battery: ${data.battery_percentage}%
+- Time: ${data.time} (Hour: ${data.hour}, Weekday: ${data.weekday})
+- Location: Lat ${res.latitude || data.latitude || 'auto'}, Lon ${res.longitude || data.longitude || 'auto'}
+
+Optimized Station:
+- Name: ${optStation.Station || 'None'}
+- Distance: ${optStation.Distance || 'N/A'} km
+- Optimization Score: ${optStation.OptimizationScore || 'N/A'}
+
+Demand & Battery Analysis:
+- Predicted Demand: ${res.predicted_demand || 0} EVs/hr
+- Battery Health (SOH): ${res.battery_health || 0}%
+
+All Nearby Stations (${(res.all_stations || []).length} found):
+${(res.all_stations || []).map((s, i) => `  ${i + 1}. ${s.Station} - ${s.Distance} km, ${s.Power} kW, Probability: ${(s.Probability * 100).toFixed(1)}%`).join('\n')}
+`.trim();
+
+                    if (!isLowBatteryAlert) {
+                        document.getElementById('loader').style.display = 'none';
+                        document.getElementById('optimizeBtn').style.display = 'block';
+                        document.getElementById('resultBlock').style.display = 'block';
+                        document.getElementById('chatSection').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    if (!isLowBatteryAlert) {
+                        alert("API Error: " + err);
+                        document.getElementById('loader').style.display = 'none';
+                        document.getElementById('optimizeBtn').style.display = 'block';
+                    } else {
+                        document.getElementById('alert-loader').style.display = 'none';
+                        document.getElementById('n-station').innerText = "API Error Failed to Fetch";
+                        document.getElementById('nearestStationBlock').style.display = 'block';
+                    }
+                });
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const question = input.value.trim();
+            if (!question) return;
+            if (!window._evReport) {
+                alert("Please run the EV optimization first so Mistral has a report to analyse!");
+                return;
+            }
+
+            const messages = document.getElementById('chatMessages');
+
+            // Append user message
+            const userDiv = document.createElement('div');
+            userDiv.className = 'msg-user';
+            userDiv.innerText = question;
+            messages.appendChild(userDiv);
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+
+            // Append loading dot
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'msg-ai';
+            loadingDiv.innerText = '⏳ Mistral is thinking...';
+            messages.appendChild(loadingDiv);
+            messages.scrollTop = messages.scrollHeight;
+
+            // Call /api/chat
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ report_text: window._evReport, user_question: question })
+            })
+                .then(r => r.json())
+                .then(res => {
+                    let rawAnswer = res.answer || 'No response from Mistral.';
+                    // Parse simple markdown: bold text and line breaks for professional formatting
+                    let formatHTML = rawAnswer
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>');
+
+                    loadingDiv.innerHTML = '🤖 ' + formatHTML;
+                    messages.scrollTop = messages.scrollHeight;
+                })
+                .catch(err => {
+                    loadingDiv.innerHTML = '❌ <strong>Error:</strong><br>' + err;
+                    messages.scrollTop = messages.scrollHeight;
+                });
+        }
+
+        // ==========================================
+        // MAP & ROUTING LOGIC
+        // ==========================================
+        let evMap = null;
+        let evRouteControl = null;
+
+        function initOrUpdateMap(userLat, userLon, destLat, destLon) {
+            const mapDiv = document.getElementById('map');
+            mapDiv.style.display = "block";
+
+            // If coordinates are invalid, skip map rendering
+            if (!userLat || !userLon || !destLat || !destLon) {
+                console.warn("Missing coordinates for map routing.");
+                return;
+            }
+
+            // Initialize Map if it doesn't exist yet
+            if (!evMap) {
+                evMap = L.map('map').setView([userLat, userLon], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(evMap);
+            } else {
+                evMap.setView([userLat, userLon], 13);
+            }
+
+            // Clear previous route if exists
+            if (evRouteControl) {
+                evMap.removeControl(evRouteControl);
+            }
+
+            // Plot new driving route via Leaflet Routing Machine / OSRM Demo API
+            evRouteControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(userLat, userLon),
+                    L.latLng(destLat, destLon)
+                ],
+                routeWhileDragging: false,
+                addWaypoints: false,
+                fitSelectedRoutes: true,
+                show: false
+            }).addTo(evMap);
+        }
+    </script>
+
+</body>
+
+</html>

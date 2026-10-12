@@ -1,0 +1,95 @@
+D:\sem 7 project\project\.venv\Lib\site-packages\pytorch_tabnet\abstract_model.py:82: UserWarning: Device used : cpu
+  warnings.warn(f"Device used : {self.device}")
+Recommendation Model Loaded
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1788065551.026178    2844 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1788065553.278719    2844 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING:tensorflow:From D:\sem 7 project\project\.venv\Lib\site-packages\tf_keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+I0000 00:00:1788065555.221838    2844 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:From D:\sem 7 project\project\.venv\Lib\site-packages\tf_keras\src\backend.py:1400: The name tf.executing_eagerly_outside_functions is deprecated. Please use tf.compat.v1.executing_eagerly_outside_functions instead.
+
+WARNING:tensorflow:From D:\sem 7 project\project\.venv\Lib\site-packages\tf_keras\src\optimizers\__init__.py:317: The name tf.train.Optimizer is deprecated. Please use tf.compat.v1.train.Optimizer instead.
+
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+Demand LSTM Loaded
+D:\sem 7 project\project\.venv\Lib\site-packages\sklearn\base.py:525: InconsistentVersionWarning: Trying to unpickle estimator MinMaxScaler from version 1.3.2 when using version 1.9.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+Demand Scalers Loaded
+WARNING:tensorflow:From D:\sem 7 project\project\.venv\Lib\site-packages\tf_keras\src\backend.py:6644: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+Battery Model Loaded
+Battery Dataset Loaded
+
+
+============================================================
+          SMART EV MULTI-AGENT SYSTEM
+============================================================
+
+Enter your EV details
+
+Battery Percentage (0-100): 
+Fetching your live location...
+Location found: Chennai (Lat: 13.0895, Lon: 80.2739)
+Vehicle Type (Car/Bike/SUV): Time (Morning/Afternoon/Evening/Night): Current Hour (0-23): Weekday (0=Monday, 6=Sunday): Charging Power (kW): 
+
+============================================================
+          STARTING MULTI-AGENT WORKFLOW
+============================================================
+
+Recommendation Agent Running...
+3 stations received:
+  [1] Spencer plaza
+      Distance: 3.031847326077519 KM
+      Power: 25 kW
+      Connectors: 1
+      Probability: 99.58%
+
+  [2] Saravana Stores - Padi - Relux Electric 
+      Distance: 9.119750719900392 KM
+      Power: 60 kW
+      Connectors: 2
+      Probability: 1.93%
+
+  [3] Dr. MGR University 
+      Distance: 10.635032054261771 KM
+      Power: 30 kW
+      Connectors: 2
+      Probability: 0.09%
+
+
+Demand Agent Running...
+Received Hour: 14
+Received Weekday: 2
+Received Charging Power: 50.0
+Predicted Demand : 13.710132598876953 EVs/hour
+
+Battery Agent Running...
+Battery Health : 88.39%
+
+Optimization Agent Running...
+Optimized Station: Spencer plaza
+Optimization Score: 0.6486
+
+
+============================================================
+             FINAL RECOMMENDATION
+============================================================
+
+Recommended Charging Station
+Station : Spencer plaza
+Distance : 3.031847326077519 KM
+Charging Power : 25 kW
+Connectors : 1
+Recommendation Probability : 99.58 %
+Predicted Demand : 13.71 EVs/hour
+Battery Health : 88.39 %
+Optimization Score : 0.6486
+
+
+============================================================
+       RECOMMENDATION COMPLETED
+============================================================
